@@ -16,4 +16,4 @@ class Couriers(Base):
     rating = Column("rating", Float())
     earnings = Column("earnings", Integer())
 
-    orders = relationship('Orders', backref="courier")
+    orders = relationship("Orders", backref="courier")

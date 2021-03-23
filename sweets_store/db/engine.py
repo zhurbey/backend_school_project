@@ -1,5 +1,5 @@
-import typing as t
 import os
+import typing as t
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -8,7 +8,7 @@ from yarl import URL
 
 
 db_url = URL.build(
-    scheme="postgresql",
+    scheme=os.environ["DB_SCHEME"],
     host=os.environ["DB_HOST"],
     user=os.environ["DB_USER"],
     password=os.environ.get("DB_PASSWORD", ""),

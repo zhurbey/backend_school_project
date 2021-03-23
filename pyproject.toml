@@ -2,6 +2,7 @@
 line-length = 99
 target-version = ["py38"]
 exclude = """
+/alembic/versions/
 """
 
 [tool.isort]
@@ -13,5 +14,5 @@ use_parentheses = true
 case_sensitive = true
 ensure_newline_before_comments = true
 skip_glob = [
-    "",
+    "**/alembic/versions/*",
 ]

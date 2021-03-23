@@ -29,7 +29,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "sweets_store = sweets_store.__main__:run_server",
+            "sweets_store.api = sweets_store.api.__main__:run_server",
         ]
     },
 )
