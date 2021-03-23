@@ -1,9 +1,9 @@
 import os
 import typing as t
 
-from sqlalchemy import create_engine
+from asyncpgsa import PG
+from aiohttp.web import Application
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 from yarl import URL
 
 
@@ -16,7 +16,13 @@ db_url = URL.build(
     path=os.environ["DB_NAME"],
 )
 
-engine = create_engine(str(db_url))
 Base = declarative_base()
 
-Session = sessionmaker(bind=engine)
+
+async def connect_db(app: Application, ) -> None:
+    app["pg"] = PG()
+    app["pg"].init(str(db_url))
+
+
+async def disconnect_db(app: Application) -> None:
+    app["pg"].close()

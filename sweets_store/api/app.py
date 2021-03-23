@@ -1,5 +1,6 @@
 from aiohttp import web
 
+from sweets_store.db.engine import connect_db, disconnect_db
 from .handlers.couriers.endpoints import get_courier, patch_courier, post_couriers
 from .handlers.orders.endpoints import assign_order, complete_order, post_orders
 
@@ -19,5 +20,8 @@ app.add_routes(
 
 
 def start_server() -> None:
+
+    app.on_startup.append(connect_db)
+    app.on_cleanup.append(disconnect_db)
 
     web.run_app(app)

@@ -4,6 +4,7 @@ from setuptools import find_packages, setup  # type: ignore
 REQUIREMENTS = [
     "aiohttp",
     "SQLAlchemy",
+    "asyncpgsa",
     "pydantic",
     "yarl",
 ]
