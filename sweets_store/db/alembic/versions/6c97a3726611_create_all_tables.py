@@ -8,6 +8,8 @@ Create Date: 2021-03-23 01:58:28.874546
 from alembic import op
 import sqlalchemy as sa
 
+from sweets_store.db.tables.couriers import CouriersTypesEnum
+
 
 # revision identifiers, used by Alembic.
 revision = '6c97a3726611'
@@ -46,3 +48,5 @@ def downgrade():
     op.drop_table('orders')
     op.drop_table('couriers')
     # ### end Alembic commands ###
+
+    CouriersTypesEnum.drop(op.get_bind(), checkfirst=False)

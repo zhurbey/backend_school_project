@@ -1,2 +1,2 @@
-from .couriers import Couriers
-from .orders import Orders
+from .couriers import couriers_table
+from .orders import orders_table

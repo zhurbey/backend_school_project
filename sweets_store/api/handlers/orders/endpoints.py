@@ -1,13 +1,18 @@
-from aiohttp.web import Request, Response
+from aiohttp.web import Response
+
+from ..base import BaseView
 
 
-async def post_orders(request: Request) -> Response:
-    pass
+class Orders(BaseView):
+    async def post(self) -> Response:
+        pass
 
 
-async def assign_order(request: Request) -> Response:
-    pass
+class OrdersAssign(BaseView):
+    async def post(self) -> Response:
+        pass
 
 
-async def complete_order(request: Request) -> Response:
-    pass
+class OrdersComplete(BaseView):
+    async def post(self) -> Response:
+        pass

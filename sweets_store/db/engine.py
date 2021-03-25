@@ -1,9 +1,8 @@
 import os
-import typing as t
 
-from asyncpgsa import PG
 from aiohttp.web import Application
-from sqlalchemy.ext.declarative import declarative_base
+from asyncpgsa import PG  # type: ignore
+from sqlalchemy import MetaData  # type: ignore
 from yarl import URL
 
 
@@ -12,17 +11,18 @@ db_url = URL.build(
     host=os.environ["DB_HOST"],
     user=os.environ["DB_USER"],
     password=os.environ.get("DB_PASSWORD", ""),
-    port=os.environ["DB_PORT"],
+    port=int(os.environ["DB_PORT"]),
     path=os.environ["DB_NAME"],
 )
 
-Base = declarative_base()
+metadata = MetaData()
 
 
-async def connect_db(app: Application, ) -> None:
+async def connect_db(app: Application) -> None:
+
     app["pg"] = PG()
-    app["pg"].init(str(db_url))
+    await app["pg"].init(str(db_url))
 
 
 async def disconnect_db(app: Application) -> None:
-    app["pg"].close()
+    await app["pg"].pool.close()

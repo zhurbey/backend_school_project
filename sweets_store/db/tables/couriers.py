@@ -1,19 +1,20 @@
-from sqlalchemy import ARRAY, Column, Enum, Float, Integer, String  # type: ignore
-from sqlalchemy.orm import relationship
+from sqlalchemy import ARRAY, Column, Enum, Float, Integer, String, Table  # type: ignore
 
 from sweets_store.api.handlers.couriers.constants import CouriersTypes
 
-from ..engine import Base
+from ..engine import metadata
 
 
-class Couriers(Base):
-    __tablename__ = "couriers"
+CouriersTypesEnum = Enum(CouriersTypes)
 
-    courier_id = Column("courier_id", Integer(), primary_key=True)
-    courier_type = Column("courier_type", Enum(CouriersTypes), nullable=False)
-    regions = Column("regions", ARRAY(Integer), nullable=False)
-    working_hours = Column("working_hours", ARRAY(String), nullable=False)
-    rating = Column("rating", Float())
-    earnings = Column("earnings", Integer())
 
-    orders = relationship("Orders", backref="courier")
+couriers_table = Table(
+    "couriers",
+    metadata,
+    Column("courier_id", Integer(), primary_key=True),
+    Column("courier_type", CouriersTypesEnum, nullable=False),
+    Column("regions", ARRAY(Integer), nullable=False),
+    Column("working_hours", ARRAY(String), nullable=False),
+    Column("rating", Float()),
+    Column("earnings", Integer()),
+)

@@ -4,7 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 import sweets_store.db.tables
-from sweets_store.db.engine import Base, db_url
+from sweets_store.db.engine import db_url, metadata
 
 
 # this is the Alembic Config object, which provides
@@ -19,7 +19,7 @@ fileConfig(config.config_file_name)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata
+target_metadata = metadata
 
 # set sqlalchemy connection url
 config.set_main_option("sqlalchemy.url", str(db_url))

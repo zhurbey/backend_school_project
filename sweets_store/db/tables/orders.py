@@ -1,17 +1,26 @@
-from sqlalchemy import ARRAY, Column, DateTime, Float, ForeignKey, Integer, String  # type: ignore
-from sqlalchemy.orm import relationship  # type: ignore
+from sqlalchemy import (  # type: ignore
+    ARRAY,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+)
 
-from ..engine import Base
+from ..engine import metadata
 
 
-class Orders(Base):
-    __tablename__ = "orders"
-
-    order_id = Column("order_id", Integer(), primary_key=True)
-    weight = Column("weight", Float(), nullable=False)
-    region = Column("region", Integer(), nullable=False)
-    delivery_hours = Column("delivery_hours", ARRAY(String), nullable=False)
-    assign_time = Column("assign_type", DateTime())
-    complete_time = Column("complete_time", DateTime())
-
-    courier_id = Column("courier_id", Integer(), ForeignKey("couriers.courier_id"))
+orders_table = Table(
+    "orders",
+    metadata,
+    Column("order_id", Integer(), primary_key=True),
+    Column("weight", Float(), nullable=False),
+    Column("region", Integer(), nullable=False),
+    Column("delivery_hours", ARRAY(String), nullable=False),
+    Column("assign_type", DateTime()),
+    Column("complete_time", DateTime()),
+    Column("courier_id", Integer(), ForeignKey("couriers.courier_id")),
+)
