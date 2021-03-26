@@ -1,45 +1,38 @@
 import json
+import typing as t
 
 from aiohttp.web import Response
-from pydantic import ValidationError
-from asyncpg.exceptions import UniqueViolationError
 
-from ..base import BaseView
+from ..base import BaseCreateView, BaseView
 from .datatypes import CourierCreate
 from .queries import create_couriers
 
 
-class CouriersView(BaseView):
+class CouriersView(BaseCreateView[CourierCreate]):
+
+    PARSE_MODEL = CourierCreate
 
     async def post(self) -> Response:
         request_body = await self.request.json()
         data = request_body.get("data", [])
 
-        parsing_errors = []
-        parsed_couriers = []
+        # if have_parsing_errors is true, parsing_result is errors reports, otherwise it's a
+        # list of parsed couriers
+        have_parsing_errors, parsing_result = self.parse_data(data, "courier_id")
 
-        for courier in data:
-
-            try:
-                parsed_couriers.append(CourierCreate(**courier))
-            except ValidationError as error:
-                # parsing_errors.append((list_index, error.json()))
-                parsing_errors.append(courier['courier_id'])
-
-        if parsing_errors:
-            body = {
+        if have_parsing_errors:
+            # redefine variable below, don't need to bind type
+            body: t.Any = {
                 "validation_error": {
-                    "couriers": [{"id": courier_id} for courier_id in parsing_errors]
+                    "couriers": [{"id": courier_id} for courier_id in parsing_result],
+                    **parsing_result,  # type: ignore
                 }
             }
 
             return Response(body=json.dumps(body), status=400)
 
-        # There's already a row with id of one of new couriers
-        try:
-            created = await create_couriers(self.pg, parsed_couriers)
-        except UniqueViolationError as error:
-            return Response(body=json.dumps({error: "Unique id constraint violation"}), status=400)
+        parsing_result = t.cast(t.List[CourierCreate], parsing_result)
+        created = await create_couriers(self.pg, parsing_result)
 
         ids = [{"id": row["courier_id"]} for row in created]
         body = {"couriers": ids}

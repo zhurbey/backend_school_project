@@ -1,10 +1,11 @@
 import typing as t
 
-from asyncpgsa import PG  # type: ignore
 from asyncpg import Record  # type: ignore
+from asyncpgsa import PG  # type: ignore
+
+from sweets_store.db.tables import couriers_table
 
 from .datatypes import CourierCreate
-from sweets_store.db.tables import couriers_table
 
 
 async def create_couriers(pg: PG, couriers: t.List[CourierCreate]) -> t.List[Record]:
