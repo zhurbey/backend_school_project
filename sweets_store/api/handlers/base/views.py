@@ -4,7 +4,7 @@ from aiohttp.web import View
 from asyncpgsa import PG  # type: ignore
 from pydantic import BaseModel, ValidationError
 
-from sweets_store.utils.parsing_errors import get_parsing_report
+from sweets_store.utils.data_parsing import get_parsing_report
 
 
 class BaseView(View):

@@ -1,6 +1,6 @@
 import typing as t
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 
 def get_parsing_report(errors: t.Dict[int, ValidationError]) -> t.Dict[int, t.Any]:

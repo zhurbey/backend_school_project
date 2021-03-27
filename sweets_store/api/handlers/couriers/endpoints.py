@@ -3,7 +3,7 @@ import typing as t
 
 from aiohttp.web import Response
 
-from ..base import BaseCreateView, BaseView
+from ..base.views import BaseCreateView, BaseView
 from .datatypes import CourierCreate
 from .queries import create_couriers
 

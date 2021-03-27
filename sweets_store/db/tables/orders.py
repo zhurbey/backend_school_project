@@ -20,7 +20,6 @@ orders_table = Table(
     Column("weight", Float(), nullable=False),
     Column("region", Integer(), nullable=False),
     Column("delivery_hours", ARRAY(String), nullable=False),
-    Column("assign_type", DateTime()),
+    Column("bundle_id", ForeignKey("bundles.bundle_id")),
     Column("complete_time", DateTime()),
-    Column("courier_id", Integer(), ForeignKey("couriers.courier_id")),
 )

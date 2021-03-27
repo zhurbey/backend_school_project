@@ -3,7 +3,7 @@ from setuptools import find_packages, setup  # type: ignore
 
 REQUIREMENTS = [
     "aiohttp",
-    "SQLAlchemy",
+    "SQLAlchemy==1.3.23",
     "asyncpgsa",
     "pydantic",
     "yarl",
