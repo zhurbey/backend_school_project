@@ -2,11 +2,12 @@ from setuptools import find_packages, setup  # type: ignore
 
 
 REQUIREMENTS = [
-    "aiohttp",
+    "aiohttp==3.7.4",
     "SQLAlchemy==1.3.23",
-    "asyncpgsa",
-    "pydantic",
-    "yarl",
+    "asyncpgsa==0.27.1",
+    "pydantic==1.8.1",
+    "yarl==1.6.3",
+    "pytz==2021.1"
 ]
 
 DEV_REQUIREMENTS = [
