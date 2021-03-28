@@ -17,6 +17,7 @@ PARSE_MODEL_TYPE = t.TypeVar("PARSE_MODEL_TYPE", bound=BaseModel)
 
 
 class BaseCreateView(BaseView, t.Generic[PARSE_MODEL_TYPE]):
+    """View for creating/updating data, validate incoming values"""
 
     PARSE_MODEL: t.Type[PARSE_MODEL_TYPE]  # pydantic model(for example CourierCreate)
 

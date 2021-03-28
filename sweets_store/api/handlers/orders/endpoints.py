@@ -5,20 +5,34 @@ from datetime import datetime
 from aiohttp.web import Response
 from asyncpg import Record  # type: ignore
 
-from sweets_store.utils.dates import datetime_to_string
+from sweets_store.utils.dates import datetime_to_string, string_to_GMT_datetime
 
 from ..base.views import BaseCreateView, BaseView
-from ..bundles.queries import create_bundle, get_courier_active_bundle
+from ..bundles.queries import (
+    check_if_bundle_is_completed,
+    create_bundle,
+    get_courier_active_bundle,
+    set_bundle_finished_status,
+)
 from ..couriers.queries import get_courier_by_id
-from ..orders.queries import get_bundle_not_finished_orders
-from .datatypes import OrderCreate
-from .queries import create_orders, get_free_orders
+from ..orders.queries import (
+    get_bundle_not_finished_orders,
+    get_order_courier_id,
+    is_order_completed,
+)
+from .datatypes import OrderCreateModel
+from .queries import create_orders, get_free_orders, set_order_complete_time
 from .utils import filter_orders_for_courier, get_best_orders_subset
 
 
-class Orders(BaseCreateView[OrderCreate]):
+# Class aliases should appear at top level:
+# https://github.com/python/mypy/issues/9238
+ORDERS_VIEW_PARSE_MODEL = OrderCreateModel
 
-    PARSE_MODEL = OrderCreate
+
+class OrdersView(BaseCreateView[ORDERS_VIEW_PARSE_MODEL]):
+
+    PARSE_MODEL = ORDERS_VIEW_PARSE_MODEL
 
     async def post(self) -> Response:
         request_body = await self.request.json()
@@ -39,7 +53,7 @@ class Orders(BaseCreateView[OrderCreate]):
 
             return Response(body=json.dumps(body), status=400)
 
-        parsing_result = t.cast(t.List[OrderCreate], parsing_result)
+        parsing_result = t.cast(t.List[ORDERS_VIEW_PARSE_MODEL], parsing_result)
         created = await create_orders(self.pg, parsing_result)
 
         ids = [{"id": row["order_id"]} for row in created]
@@ -48,7 +62,7 @@ class Orders(BaseCreateView[OrderCreate]):
         return Response(body=json.dumps(body), status=201)
 
 
-class OrdersAssign(BaseView):
+class OrdersAssignView(BaseView):
     @staticmethod
     def make_positive_response_body(
         orders: t.List[Record], assign_time: datetime
@@ -98,6 +112,27 @@ class OrdersAssign(BaseView):
         return Response(body=json.dumps(body))
 
 
-class OrdersComplete(BaseView):
+class OrdersCompleteView(BaseView):
     async def post(self) -> Response:
-        pass
+        request_body = await self.request.json()
+
+        zero_timezone_complete_time = string_to_GMT_datetime(request_body["complete_time"])
+        order_courier_id = await get_order_courier_id(self.pg, request_body["order_id"])
+
+        order_complete_time = await is_order_completed(self.pg, request_body["order_id"])
+        if order_complete_time:
+            return Response(body=json.dumps({"order_id": request_body["order_id"]}))
+
+        # Check that there is an order-courier pair in database
+        if order_courier_id != request_body["courier_id"]:
+            return Response(status=400)
+
+        bundle_id = await set_order_complete_time(
+            self.pg, request_body["order_id"], zero_timezone_complete_time
+        )
+
+        is_bundle_completed = await check_if_bundle_is_completed(self.pg, bundle_id)
+        if is_bundle_completed:
+            await set_bundle_finished_status(self.pg, bundle_id)
+
+        return Response(body=json.dumps({"order_id": request_body["order_id"]}))

@@ -3,7 +3,7 @@ from aiohttp import web
 from sweets_store.db.engine import connect_db, disconnect_db
 
 from .handlers.couriers.endpoints import CourierView, CouriersView
-from .handlers.orders.endpoints import Orders, OrdersAssign, OrdersComplete
+from .handlers.orders.endpoints import OrdersAssignView, OrdersCompleteView, OrdersView
 
 
 app = web.Application()
@@ -13,9 +13,9 @@ app.add_routes(
         web.post("/couriers", CouriersView),
         web.patch("/couriers/{courier_id}", CourierView),
         web.get("/couriers/{courier_id}", CourierView),
-        web.post("/orders", Orders),
-        web.post("/orders/assign", OrdersAssign),
-        web.post("/orders/complete", OrdersComplete),
+        web.post("/orders", OrdersView),
+        web.post("/orders/assign", OrdersAssignView),
+        web.post("/orders/complete", OrdersCompleteView),
     ]
 )
 

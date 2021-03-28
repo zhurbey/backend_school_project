@@ -1,9 +1,12 @@
 import itertools
 import typing as t
-from datetime import datetime
+from datetime import datetime, timedelta
+
+import pytz
 
 
 TIME_FORMAT = "%H:%M"
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 
 def match_hours_interval_format(interval: str) -> bool:
@@ -49,6 +52,26 @@ def do_time_intervals_intersect(intervals_set1: t.List[str], intervals_set2: t.L
     return False
 
 
-def datetime_to_string(datetime_obj: datetime) -> str:
+def any_timezone_to_GMT(dt: datetime) -> datetime:
+    """Convert datetime with timezone info from any timezone to +00:00"""
 
-    return datetime_obj.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    result = dt.astimezone(pytz.UTC)
+    result = result.replace(tzinfo=None)
+
+    return result
+
+
+def string_to_GMT_datetime(dt_str: str) -> datetime:
+
+    dt = datetime.strptime(dt_str, DATETIME_FORMAT)
+    return any_timezone_to_GMT(dt)
+
+
+def datetime_to_string(dt: datetime) -> str:
+
+    return dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+def datetime_delta_to_seconds(dt: timedelta) -> float:
+
+    return dt.seconds + dt.microseconds / 10 ** 6
