@@ -7,6 +7,7 @@ from sweets_store.utils.dates import do_time_intervals_intersect
 
 
 def filter_orders_for_courier(courier: Record, orders: t.List[Record]) -> t.List[Record]:
+
     capacity = CouriersCapacity[courier["courier_type"]]
     regions, working_hours = courier["regions"], courier["working_hours"]
 
@@ -29,6 +30,7 @@ def filter_orders_for_courier(courier: Record, orders: t.List[Record]) -> t.List
 
 
 def get_best_orders_subset(courier: Record, orders: t.List[Record]) -> t.List[Record]:
+
     capacity = CouriersCapacity[courier["courier_type"]]
     sorted_orders = sorted(orders, key=lambda order: t.cast(float, order["weight"]))
 

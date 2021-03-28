@@ -19,7 +19,7 @@ def match_hours_interval_format(interval: str) -> bool:
     except ValueError:
         return False
 
-    # Right moment is bigger then the left one
+    # Right time moment is bigger then the left one
     if left >= right:
         return False
 
@@ -32,13 +32,16 @@ def pydantic_match_hours_interval_validator(interval: str) -> str:
         raise ValueError(
             f"Time period '{interval}' definition doesn't "
             f"follow format HH:MM-HH:MM. "
-            f"0 <= hour < 24, 0 <= minute < 60, left moment is less then the right"
+            f"0 <= hour < 24, 0 <= minute < 60, left time moment is less then the right"
         )
 
     return interval
 
 
 def do_time_intervals_intersect(intervals_set1: t.List[str], intervals_set2: t.List[str]) -> bool:
+    """Check if any two intervals from two different sets intersect. Doesn't include borders:
+    periods 10:00-12:00 and 12:00-13:00 do not intersect. Periods defined as strings
+    """
 
     for period1, period2 in itertools.product(intervals_set1, intervals_set2):
 

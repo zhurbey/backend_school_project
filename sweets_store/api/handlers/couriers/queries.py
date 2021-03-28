@@ -8,7 +8,6 @@ from sweets_store.db.tables import bundles_table, couriers_table, orders_table
 
 from ..base.queries import get_row_by_id, insert_many
 from .datatypes import CourierCreateModel
-from .utils import get_best_region_average_time
 
 
 async def create_couriers(pg: PG, couriers: t.List[CourierCreateModel]) -> t.List[Record]:
@@ -34,8 +33,8 @@ async def update_courier(pg: PG, courier_data: t.Dict[str, t.Any]) -> Record:
     return courier_row
 
 
-async def get_courier_rating(pg: PG, courier_id: int) -> float:
-    """Return t - min time between average mean times for deliveries in each region"""
+async def get_aggregated_bundles_for_courier(pg: PG, courier_id: int) -> t.List[Record]:
+    """Return orders data grouped by bundles, needed for order completion time calculation"""
 
     query = (
         select(
@@ -50,16 +49,17 @@ async def get_courier_rating(pg: PG, courier_id: int) -> float:
         )
         .group_by(bundles_table.c.assign_time)  # group by bundles
         .where(bundles_table.c.courier_id == courier_id)
+        .where(orders_table.c.complete_time != None)
     )
 
     bundles_aggregations = await pg.fetch(query)
-    return get_best_region_average_time(bundles_aggregations)
+    return t.cast(t.List[Record], bundles_aggregations)
 
 
 async def get_courier_finished_bundles(pg: PG, courier_id: int) -> t.List[Record]:
 
     query = (
-        select([bundles_table.c.courier_type])
+        select([bundles_table])
         .where(bundles_table.c.is_finished == True)
         .where(bundles_table.c.courier_id == courier_id)
     )

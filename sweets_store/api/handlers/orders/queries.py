@@ -39,10 +39,9 @@ async def get_bundle_not_finished_orders(pg: PG, bundle_id: int) -> t.List[Recor
 
 
 async def update_orders_bundle(
-    pg: PG, bundle_id: t.Optional[int], orders_ids: t.List[int]
+    pg: PG, orders_ids: t.List[int], bundle_id: t.Optional[int]
 ) -> None:
-
-    """Bind orders from orders_ids to bundle_id"""
+    """Bind orders from orders_ids to bundle with id bundle_id"""
 
     query = (
         update(orders_table)
@@ -53,19 +52,18 @@ async def update_orders_bundle(
     await pg.fetch(query)
 
 
-async def set_order_complete_time(pg: PG, order_id: int, complete_time: datetime) -> int:
-    """Mark order as completed and return bundle id"""
+async def set_order_complete_time(pg: PG, order_id: int, complete_time: datetime) -> Record:
+    """Mark order as completed(set complete_time), return updated order row"""
 
     query = (
         update(orders_table)
         .where(orders_table.c.order_id == order_id)
         .values(complete_time=complete_time)
-        .returning(orders_table.c.bundle_id)
+        .returning(orders_table)
     )
 
-    bundle_id_row = await pg.fetchrow(query)
-
-    return t.cast(int, bundle_id_row["bundle_id"])
+    updated_order_row = await pg.fetchrow(query)
+    return t.cast(Record, updated_order_row)
 
 
 async def get_order_courier_id(pg: PG, order_id: int) -> t.Optional[int]:
@@ -81,6 +79,7 @@ async def get_order_courier_id(pg: PG, order_id: int) -> t.Optional[int]:
 
     courier_id_row = await pg.fetchrow(query)
 
+    # courier_id or None
     result = courier_id_row["courier_id"] if courier_id_row else courier_id_row
     return t.cast(t.Optional[int], result)
 
@@ -92,5 +91,6 @@ async def is_order_completed(pg: PG, order_id: int) -> t.Optional[datetime]:
 
     complete_time_row = await pg.fetchrow(query)
 
+    # complete_time or None
     result = complete_time_row["complete_time"] if complete_time_row else complete_time_row
     return t.cast(t.Optional[datetime], result)

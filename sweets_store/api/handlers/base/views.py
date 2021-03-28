@@ -4,7 +4,7 @@ from aiohttp.web import View
 from asyncpgsa import PG  # type: ignore
 from pydantic import BaseModel, ValidationError
 
-from sweets_store.utils.data_parsing import get_parsing_report
+from sweets_store.utils.data_parsing import get_parsing_errors_report
 
 
 class BaseView(View):
@@ -17,9 +17,9 @@ PARSE_MODEL_TYPE = t.TypeVar("PARSE_MODEL_TYPE", bound=BaseModel)
 
 
 class BaseCreateView(BaseView, t.Generic[PARSE_MODEL_TYPE]):
-    """View for creating/updating data, validate incoming values"""
+    """View for creating/updating data, functionality for incoming data validation"""
 
-    PARSE_MODEL: t.Type[PARSE_MODEL_TYPE]  # pydantic model(for example CourierCreate)
+    PARSE_MODEL: t.Type[PARSE_MODEL_TYPE]  # pydantic model(for example CourierCreateModel)
 
     def parse_data(
         self, data: t.List[t.Dict[str, t.Any]], index_field_name: str
@@ -39,7 +39,7 @@ class BaseCreateView(BaseView, t.Generic[PARSE_MODEL_TYPE]):
                 parsing_errors[obj_[index_field_name]] = error
 
         if parsing_errors:
-            parsing_report = get_parsing_report(parsing_errors)
+            parsing_report = get_parsing_errors_report(parsing_errors)
             return True, parsing_report
 
         return False, parsed_objects

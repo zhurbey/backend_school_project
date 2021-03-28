@@ -26,7 +26,7 @@ def calculate_courier_earnings(finished_bundles: t.List[Record]) -> int:
 
 def get_best_region_average_time(bundles_aggregations: t.List[Record]) -> float:
 
-    # region number -> List[orders completion time lengths(datetime interval and then seconds)]
+    # region_number -> List[orders completion time lengths(datetime interval and then seconds)]
     regions_times: t.Dict[int, t.List[t.Any]] = {}
 
     for bundle_row in bundles_aggregations:
@@ -38,19 +38,18 @@ def get_best_region_average_time(bundles_aggregations: t.List[Record]) -> float:
         orders.sort(key=lambda order_: t.cast(datetime, order_[0]))  # sort by complete times
         for i, order_ in enumerate(orders):
             if i == 0:
-                completion_time_length = order_[0] - bundle_row["assign_time"]
+                completion_time_delta = order_[0] - bundle_row["assign_time"]
             else:
-                completion_time_length = order_[0] - orders[i - 1][0]
+                completion_time_delta = order_[0] - orders[i - 1][0]
 
             region_completion_times = regions_times.get(order_[1], [])
-            region_completion_times.append(completion_time_length)
+            region_completion_times.append(completion_time_delta)
             regions_times[order_[1]] = region_completion_times
 
     for key, value in regions_times.items():
-        # Convert complete times from datetime intervals to seconds
+        # Convert complete times from datetime deltas to seconds
         complete_times = list(map(datetime_delta_to_seconds, value))
         regions_times[key] = complete_times
 
     average_regions_times = list(map(mean, regions_times.values()))
-
     return t.cast(float, min(average_regions_times))

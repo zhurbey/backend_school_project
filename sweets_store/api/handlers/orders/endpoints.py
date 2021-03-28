@@ -8,12 +8,7 @@ from asyncpg import Record  # type: ignore
 from sweets_store.utils.dates import datetime_to_string, string_to_GMT_datetime
 
 from ..base.views import BaseCreateView, BaseView
-from ..bundles.queries import (
-    check_if_bundle_is_completed,
-    create_bundle,
-    get_courier_active_bundle,
-    set_bundle_finished_status,
-)
+from ..bundles.queries import create_bundle, get_courier_active_bundle, update_bundle_status
 from ..couriers.queries import get_courier_by_id
 from ..orders.queries import (
     get_bundle_not_finished_orders,
@@ -64,15 +59,14 @@ class OrdersView(BaseCreateView[ORDERS_VIEW_PARSE_MODEL]):
 
 class OrdersAssignView(BaseView):
     @staticmethod
-    def make_positive_response_body(
+    def build_positive_response_body(
         orders: t.List[Record], assign_time: datetime
     ) -> t.Dict[str, t.Any]:
 
         orders_ids = [order["order_id"] for order in orders]
-        assign_time_str = datetime_to_string(assign_time)
         body = {
             "orders": [{"id": order_id} for order_id in orders_ids],
-            "assign_time": assign_time_str,
+            "assign_time": datetime_to_string(assign_time),
         }
 
         return body
@@ -85,16 +79,16 @@ class OrdersAssignView(BaseView):
         if not courier:
             return Response(status=400)
 
-        # Check if courier has active bundle, return not finished orders
+        # Check if courier has an active bundle, return not finished orders
         # in response if there is one
-        courier_active_bundle = await get_courier_active_bundle(self.pg, courier_id)
-        if courier_active_bundle:
+        courier_active_bundle_row = await get_courier_active_bundle(self.pg, courier_id)
+        if courier_active_bundle_row:
             not_finished_orders = await get_bundle_not_finished_orders(
-                self.pg, courier_active_bundle["bundle_id"]
+                self.pg, courier_active_bundle_row["bundle_id"]
             )
 
-            body = self.make_positive_response_body(
-                not_finished_orders, courier_active_bundle["assign_time"]
+            body = self.build_positive_response_body(
+                not_finished_orders, courier_active_bundle_row["assign_time"]
             )
 
             return Response(body=json.dumps(body))
@@ -107,8 +101,9 @@ class OrdersAssignView(BaseView):
         if not best_orders_set:
             return Response(body=json.dumps({"orders": []}))
 
-        assign_time = await create_bundle(self.pg, courier, best_orders_set)
-        body = self.make_positive_response_body(best_orders_set, assign_time)
+        assign_time = await create_bundle(self.pg, best_orders_set, courier)
+
+        body = self.build_positive_response_body(best_orders_set, assign_time)
         return Response(body=json.dumps(body))
 
 
@@ -116,23 +111,29 @@ class OrdersCompleteView(BaseView):
     async def post(self) -> Response:
         request_body = await self.request.json()
 
-        zero_timezone_complete_time = string_to_GMT_datetime(request_body["complete_time"])
-        order_courier_id = await get_order_courier_id(self.pg, request_body["order_id"])
+        order_id = request_body["order_id"]
+        courier_id = request_body["courier_id"]
+        complete_time = request_body["complete_time"]
 
-        order_complete_time = await is_order_completed(self.pg, request_body["order_id"])
-        if order_complete_time:
-            return Response(body=json.dumps({"order_id": request_body["order_id"]}))
+        zero_timezone_complete_time = string_to_GMT_datetime(complete_time)
+        # get courier_id of courier related to order
+        order_courier_id = await get_order_courier_id(self.pg, order_id)
 
-        # Check that there is an order-courier pair in database
-        if order_courier_id != request_body["courier_id"]:
+        # Check that there is an order-courier matching pair in database
+        if order_courier_id != courier_id:
             return Response(status=400)
 
-        bundle_id = await set_order_complete_time(
-            self.pg, request_body["order_id"], zero_timezone_complete_time
+        # Check if order is already completed
+        order_complete_time = await is_order_completed(self.pg, order_id)
+        if order_complete_time:
+            return Response(body=json.dumps({"order_id": order_id}))
+
+        updated_order_row = await set_order_complete_time(
+            self.pg, order_id, zero_timezone_complete_time
         )
 
-        is_bundle_completed = await check_if_bundle_is_completed(self.pg, bundle_id)
-        if is_bundle_completed:
-            await set_bundle_finished_status(self.pg, bundle_id)
+        # Check if bundle is empty after completing this order, mark as completed if so.
+        # Do not put this query inside of set_order_complete_time query to avoid circular imports
+        await update_bundle_status(self.pg, updated_order_row["bundle_id"])
 
-        return Response(body=json.dumps({"order_id": request_body["order_id"]}))
+        return Response(body=json.dumps({"order_id": order_id}))
