@@ -143,6 +143,8 @@ export DB_NAME=/backend_school
 Устанавливаем переменные окружения:
 ```. ./env```
 
+**Пароль для пользователя postgres - 12346**
+
 6. Запускаем миграции:  
 ```pip install alembic``` - устанавливаем alembic  
 
