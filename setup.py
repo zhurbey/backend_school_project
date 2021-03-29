@@ -7,7 +7,7 @@ REQUIREMENTS = [
     "asyncpgsa==0.27.1",
     "pydantic==1.8.1",
     "yarl==1.6.3",
-    "pytz==2021.1"
+    "pytz==2021.1",
 ]
 
 DEV_REQUIREMENTS = [
